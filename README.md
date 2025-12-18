@@ -19,7 +19,7 @@ PPO和TRPO算法最大的不同就是在**如何控制策略更新的幅度**
 
 **TRPO** 通过 **KL散度约束** 来控制策略更新的幅度。
 
-优化目标为：$max_{\theta} \ \mathbb{E}\Big[ \frac{\pi_\theta(a|s)}{\pi_{\text{old}}(a|s)} A(s,a) \Big]$
+优化目标为：$$max_\theta\left.\mathbb{E}{\left[\frac{\pi_\theta(a|s)}{\pi_\mathrm{old}(a|s)}A(s,a)\right]}\right.$$
 
 在此基础上加一个 **KL 散度约束**：$\mathbb{E}\big[ KL(\pi_{\text{old}} \,\|\, \pi_\theta)\big] \le \delta$
 
