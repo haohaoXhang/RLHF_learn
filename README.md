@@ -231,7 +231,7 @@ MoE 里面，router 会把每个 token 分配给不同 expert，这个决策本�
 
 **定义 sequence-level 的 importance ratio：**
 
-先看定义（你截图里的那一行）：
+先看定义：
 
 $$
 s_i(\theta)
