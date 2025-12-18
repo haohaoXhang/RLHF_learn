@@ -1,0 +1,54 @@
+# GRPO分布式训练配置文件
+
+# 模型配置
+model:
+  ref_model_path: "./Qwen2.5-1.5B-Instruct"
+  pretrained_model_path: "./Qwen2.5-1.5B-Instruct"
+  dtype: "bfloat16"
+
+# 数据配置
+data:
+  data_path: "./gsm8k"
+  max_gen_len: 500
+  test_size: 100
+  sample_batch_size: 8 # 采样批次大小
+  train_batch_size: 4  # 单进程训练批次大小
+  test_batch_size: 20  # 评估批次大小
+  num_answers_per_question: 4 # 每个问题组内采样数量
+
+# 训练配置
+training:
+  use_gspo: false
+  learning_rate: 1e-5
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  sync_interval: 10  # 模型同步间隔（训练步数）
+  eval_interval: 10  # 模型评估间隔
+
+# ZeroMQ通信配置
+communication:
+  data_port: 5555      # 训练数据传输端口
+  timeout: 100         # 通信超时时间（毫秒）
+
+# DeepSpeed配置
+deepspeed:
+  config_path: "./ds_config.json"
+
+# GPU配置
+gpu:
+  sampling_gpu: 2      # 采样进程使用的GPU
+  training_gpu: [0, 1]  # 训练进程使用的GPU列表
+
+# 检查点配置
+checkpoint:
+  ckpt_dir: "./checkpoints"
+  ckpt_file: "ckpt.pt"
+
+# LoRA配置
+lora:
+  enabled: false
+  adapter_dir: "./lora_adapter"
+  rank: 32
+  alpha: 64
+  learning_rate: 2e-4
+  dropout: 0.02
