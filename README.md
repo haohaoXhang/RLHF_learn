@@ -1,5 +1,4 @@
 # RLHF_learn
-A from-scratch RLHF learning repo implementing PPO, GRPO, GSPO, and related policy-optimization algorithms with clear, reproducible training pipelines.
 
 
 TRPO：用优化问题的约束限制新策略更新步幅，使策略梯度方法训练更加稳定
