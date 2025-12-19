@@ -233,17 +233,16 @@ MoE 里面，router 会把每个 token 分配给不同 expert，这个决策本�
 
 先看定义：
 
-$$
-s_i(\theta)
-= \Bigg( \frac{\pi_\theta(o_i\mid q)}{\pi_{\text{old}}(o_i\mid q)} \Bigg)^{\frac{1}{|o_i|}}
-= \exp\!\left( \frac{1}{|o_i|}\sum_{t=1}^{|o_i|} \log\frac{\pi_\theta(a_{i,t}\mid q,o_{i,<t})}{\pi_{\text{old}}(a_{i,t}\mid q,o_{i,<t})} \right)
-$$
+$$（s_i(\theta) = \left( \frac{\pi_\theta(o_i|q)}{\pi_{\mathrm{old}}(o_i|q)} \right)^{\frac{1}{|o_i|}} = \exp \left( \frac{1}{|o_i|} \sum_{t=1}^{|o_i|} \log \frac{\pi_\theta(a_{i,t}|q, o_{i,<t})}{\pi_{\mathrm{old}}(a_{i,t}|q, o_{i,<t})} \right)）$$
 
 
-几点关键信息：$\frac{\pi_\theta(o_i|q)}{\pi_{\text{old}}(o_i|q)}$是**整条回答的概率比；**
 
-- GRPO：$\min(r_{i,t}A_i,\operatorname{clip}(r_{i,t})A_i)$ —— **每个 token 一个 ratio**；
-- GSPO：$\min(s_i A_i,\operatorname{clip}(s_i)A_i)$—— **每条回答一个 ratio**。
+
+
+几点关键信息： $\frac{\pi_\theta(o_i|q)}{\pi_{\text{old}}(o_i|q)}$是**整条回答的概率比；**
+
+- GRPO： $\min(r_{i,t}A_i,\mathrm{clip}(r_{i,t})A_i)$ —— **每个 token 一个 ratio**；
+- GSPO： $\min(s_i A_i,\mathrm{clip}(s_i)A_i)$—— **每条回答一个 ratio**。
 
 GRPO 是**每个 token 一个 ratio**，但奖励 $A_i$是“整条回答”的序列级，粒度不匹配，长序列上 ratio 容易抖、方差大。GSPO 把它改成**sequence-level ratio**：先把整条回答新旧策略概率的比值做几何平均得到 $s_i$。
 
@@ -283,7 +282,7 @@ AEPO（Agentic Entropy-Balanced Policy Optimization）提出在两个阶段**平
 
 在 policy update 里（比如 GRPO、ARPO 这种），会用 **重要性采样比值 + clip** 来稳住训练。逻辑衔接词、反思 token、以及 **tool-call 相关 token**，往往都是**高熵 token**；然而这些 token 的梯度在一开始就被 **严重 clipping**，甚至第一步更新就被“剪到死”。
 
-### **3.**AEPO 的核心思想：在 Rollout 和 Policy Update 两个阶段“平衡熵”
+### 3.AEPO 的核心思想：在 Rollout 和 Policy Update 两个阶段“平衡熵”
 
 AEPO 全名 **Agentic Entropy-Balanced Policy Optimization**，核心目标一句话：
 
