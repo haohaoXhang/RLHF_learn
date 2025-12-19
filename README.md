@@ -13,7 +13,7 @@ DAPO（字节）：提高clip上界、动态采样、token级梯度聚合、引�
 
 GSPO（qwen）：序列级重要性采样对齐序列级reward，解决token级噪声和MoE的routing replay问题
 
-## TRPO算法与PPO算法
+## 1. TRPO算法与PPO算法
 
 PPO和TRPO算法最大的不同就是在**如何控制策略更新的幅度**
 
@@ -50,7 +50,7 @@ $$
 | 实现复杂度 | 高：代码复杂、调试困难 | 低：实现简单、工业界和开源里用得更多 |
 | 理论角度 | 更接近严格的 trust region 理论 | 近似方法，理论上略弱但足够好用 |
 
-## **从PPO到DPO算法**
+## 2. 从PPO到DPO算法
 
 Direct Preference Optimization。DPO 由斯坦福大学的研究者于 2023 年提出，它以一种惊人的简洁性，对传统的 RLHF 流程发起了挑战。DPO 的核心洞见是：**我们完全可以绕过奖励模型建模这一中间步骤，直接利用人类的偏好数据来优化语言模型**。
 
@@ -110,9 +110,9 @@ DPO的训练与PPO的奖励模型的训练过程区别：
 
 PPO 的奖励模型训练时直接优化奖励模型中以Transformer 为骨干的参数；DPO的训练直接优化策略模型的参数。
 
-## **GRPO（***Group Relative Policy Optimization***）算法**
+## 3. GRPO（***Group Relative Policy Optimization***）算法
 
-**1.在 RLHF 中，价值网络-Value Model（就是上面的Initial Language Model）起什么作用？**
+**a.在 RLHF 中，价值网络-Value Model（就是上面的Initial Language Model）起什么作用？**
 
 **估计当前状态的期望回报** $V_\phi(x)$，作为 baseline；**辅助计算优势函数（Advantage）**，即：`A=r−Vϕ(x)`
 
@@ -122,11 +122,11 @@ PPO 的奖励模型训练时直接优化奖励模型中以Transformer 为骨干�
 > 对于像 GPT-3/4 这样的大模型，这意味着要**再维护一份几乎等大的网络参数**（几十亿量级），训练和显存消耗都非常大。
 > 
 
-2.从 PPO 到 GRPO 的过渡思路
+b.从 PPO 到 GRPO 的过渡思路
 
 ![image.png](image.png)
 
-### GRPO 的做法（上图下部分）
+### 3.1 GRPO 的做法（上图下部分）
 
 以组内平均奖励作为baseline
 
@@ -141,7 +141,7 @@ PPO 的奖励模型训练时直接优化奖励模型中以Transformer 为骨干�
 > 因为优势函数是通过同一组样本内部比较得到的，不需要单独训练 Value Model。
 > 
 
-### GRPO局限性
+### 3.2 GRPO局限性
 
 重要性采样的本质是：我们希望在新的分布下计算期望，但数据却来自旧分布。在 PPO/GRPO 中，我们不会直接用新策略采样，而是先用旧策略生成数据（因为采样代价高），这一过程称为 **Rollout**。在更新参数时，我们需要修正两者的分布差异，这就是重要性采样的作用。定义每个 token 的重要性比为： $r_t=\frac{\pi_\theta(a_t|s_t)}{\pi_\theta(old)(a_t|s_t)}$，则 PPO/GRPO 的目标函数可写为：
 
@@ -149,7 +149,7 @@ $L^{clip}(\theta) = \mathbb{E}_t \left[
 \min(r_t A_t,\ \text{clip}(r_t, 1-\epsilon, 1+\epsilon) A_t)
 \right]$
 
-## 从GRPO到DAPO算法
+## 4. 从GRPO到DAPO算法
 
 DAPO 在 **clip 机制、采样策略、梯度聚合、奖励设计** 四个层面优化了GRPO
 
@@ -162,14 +162,14 @@ DAPO 在 **clip 机制、采样策略、梯度聚合、奖励设计** 四个层�
 4. **Overlong Reward Shaping：规则奖励 / 软惩罚**
     - 控制回答长度，惩罚过长回答；在保证内容质量的同时，鼓励简洁、符合需求的输出。
 
-### 1. Clip-Higher：提高 clip 上界（**非对称裁剪策略**）
+### 4.1 Clip-Higher：提高 clip 上界（**非对称裁剪策略**）
 
 GRPO 中 clip 区间是对称的  $[1-\varepsilon, 1+\varepsilon]$。当 old policy 对某个 token 的概率很低，而该 token 的 advantage 又是正值（即 old model 恰好采样得非常好），此时当前 policy model 的上涨空间就会受到很大限制。DAPO做法：拉高上界：  $\mathrm{clip}(r_t, 1-\varepsilon_{\mathrm{low}}, 1+\varepsilon_{\mathrm{high}})$
 
 
 ---
 
-### 2. 动态采样（Dynamic Sampling）
+### 4.2 动态采样（Dynamic Sampling）
 
 固定次数采样时，经常采不到有效梯度，设想对一个 query 固定采样 G=10 次：如果 10 次回答都很好（都拿到 max reward），在做**归一化 advantage**时，这 10 个样本的 advantage 会全变成 0。
 
@@ -177,7 +177,7 @@ GRPO 中 clip 区间是对称的  $[1-\varepsilon, 1+\varepsilon]$。当 old pol
 
 ---
 
-### 3. Token-Level Gradient Loss：token 级梯度聚合
+### 4.3 Token-Level Gradient Loss：token 级梯度聚合
 
 GRPO 中回答越长，每个 token 的梯度越被稀释，GRPO 的损失在回答级别聚合方式是：
 先对每个 sample 的所有 token 求平均；再对 所有sample 求平均  $\frac1G \sum_{i=1}^G \frac1{|o_i|} \sum_{t=1}^{|o_i|} L_{i,t}$
@@ -195,13 +195,13 @@ GRPO 中回答越长，每个 token 的梯度越被稀释，GRPO 的损失在回
 
 ---
 
-### 4. Overlong Reward Shaping：对过长回答的软惩罚 / 规则奖励
+### 4.4 Overlong Reward Shaping：对过长回答的软惩罚 / 规则奖励
 
 防止模型无限“灌水”、占用长度预算。
 
 **DAPO**加入了 **长度相关的 soft punishment**（规则奖励的一种）：当回答长度超过第一个阈值 $L_1$ 后，reward 开始随长度线性减小；超过第二个阈值 $L_2$ 后，惩罚强度已经等同于把该回答获得的正奖励全部抵消。
 
-## **GSPO（Group Sequence Policy Optimization）：解决 MoE 训练中 GRPO 不稳定的问题**
+#### **GSPO（Group Sequence Policy Optimization）：解决 MoE 训练中 GRPO 不稳定的问题**
 
 如果说 **DAPO** 是在 GRPO 框架内做“微调与优化”，那么 **GSPO** 则是直接调整了优化目标的颗粒度——从 GRPO的*token-level* 跳到 GSPO的*sequence-level*。这一变化的动机，主要源于在 MoE 架构训练时，GRPO 的重要性采样会引入巨大方差和不稳定性。GSPO 的核心思想是：优化奖励时不再依赖逐个 token 的比值，而是关注整个生成序列的表现，从而降低噪声并提升稳定性。
 
@@ -227,7 +227,7 @@ MoE 里面，router 会把每个 token 分配给不同 expert，这个决策本�
 
 ---
 
-### GSPO 的核心设计：sequence-level importance ratio
+#### GSPO 的核心设计：sequence-level importance ratio
 
 **定义 sequence-level 的 importance ratio：**
 
@@ -250,7 +250,7 @@ $$
 
 GRPO 是**每个 token 一个 ratio**，但奖励 $A_i$是“整条回答”的序列级，粒度不匹配，长序列上 ratio 容易抖、方差大。GSPO 把它改成**sequence-level ratio**：先把整条回答新旧策略概率的比值做几何平均得到 $s_i$。
 
-## ARPO
+## 5. ARPO
 
 [https://blog.csdn.net/weixin_44778145/article/details/153779112](https://blog.csdn.net/weixin_44778145/article/details/153779112)
 
@@ -258,7 +258,7 @@ GRPO 是**每个 token 一个 ratio**，但奖励 $A_i$是“整条回答”的�
 
 **ARPO 通过“熵感知 + 优势归因”机制，在多轮工具调用任务中实现了更精细、更高效的探索，显著优于传统轨迹级 RL 方法，是 Agentic RL 领域的重要进展。**
 
-## AEPO
+## 6. AEPO
 
 AEPO（Agentic Entropy-Balanced Policy Optimization）提出在两个阶段**平衡熵**：
 
@@ -266,13 +266,13 @@ AEPO（Agentic Entropy-Balanced Policy Optimization）提出在两个阶段**平
 
 ![image.png](image%201.png)
 
-### 1.研究背景
+### 6.1 研究背景
 
 **Agentic Reinforcement Learning（Agentic RL）** 通过让模型与外部工具（如搜索引擎、代码解释器）交互，提升其推理与信息获取能力。
 
 **Web Agent + Agentic RL 的大背景：**大模型本身是“静态知识库”，容易**幻觉**、**知识过期**，所以大家搞了 RAG，用检索来补充知识。但传统 RAG 大多是“一次性检索”，难以支持真正 **多轮、长链条的 Web 探索**。于是各种 Web Agent 出现，让 LLM 可以像人一样：反复搜索 → 打开网页 → 写代码 → 再搜索。
 
-### 2.现有 Entropy-driven Agentic RL 的问题
+### 6.2 现有 Entropy-driven Agentic RL 的问题
 
 主流 agentic RL（如 ARPO 等）有一个核心套路：
 
@@ -286,7 +286,7 @@ AEPO（Agentic Entropy-Balanced Policy Optimization）提出在两个阶段**平
 
 在 policy update 里（比如 GRPO、ARPO 这种），会用 **重要性采样比值 + clip** 来稳住训练。逻辑衔接词、反思 token、以及 **tool-call 相关 token**，往往都是**高熵 token**；然而这些 token 的梯度在一开始就被 **严重 clipping**，甚至第一步更新就被“剪到死”。
 
-### 3.AEPO 的核心思想：在 Rollout 和 Policy Update 两个阶段“平衡熵”
+### 6.3 AEPO 的核心思想：在 Rollout 和 Policy Update 两个阶段“平衡熵”
 
 AEPO 全名 **Agentic Entropy-Balanced Policy Optimization**，核心目标一句话：
 
@@ -294,7 +294,7 @@ AEPO 全名 **Agentic Entropy-Balanced Policy Optimization**，核心目标一�
 既利用高熵指导探索，又避免过度依赖高熵导致“过分 branching”和“梯度被剪没”。
 > 
 
-**3.1 动态熵平衡 Rollout机制**
+**a. 动态熵平衡 Rollout机制**
 
 在正式采样前，先运行一次完整轨迹
 
@@ -314,7 +314,7 @@ AEPO 全名 **Agentic Entropy-Balanced Policy Optimization**，核心目标一�
 
 这样一来，**全局 vs 分支的采样资源不再是拍脑袋，而是由“熵差”动态决定**。
 
-3.2 **熵平衡策略优化（Entropy-Balanced Policy Optimization）**
+b. **熵平衡策略优化（Entropy-Balanced Policy Optimization）**
 
 **停止梯度裁剪（Stop-Gradient Clipping）**
 
