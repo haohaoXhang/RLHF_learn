@@ -164,9 +164,11 @@ DAPO 在 **clip 机制、采样策略、梯度聚合、奖励设计** 四个层�
 
 ### 1. Clip-Higher：提高 clip 上界（**非对称裁剪策略**）
 
-GRPO 中 clip 区间是对称的  $[1-\varepsilon, 1+\varepsilon]$。当 old policy 对某个 token 的概率很低，而该 token 的 advantage 又是正值（即 old model 恰好采样得非常好），此时当前 policy model 的上涨空间就会受到很大限制。
+GRPO 中 clip 区间是对称的  $[1-\varepsilon, 1+\varepsilon]$。当 old policy 对某个 token 的概率很低，而该 token 的 advantage 又是正值（即 old model 恰好采样得非常好），此时当前 policy model 的上涨空间就会受到很大限制。DAPO做法：拉高上界： $\operatorname{clip}(r_{t}, 1-\varepsilon_{\text{low}}, 1+\varepsilon_{\text{high}})$
 
-DAPO做法：拉高上界： $\operatorname{clip}(r_{t}, 1-\varepsilon_{\text{low}}, 1+\varepsilon_{\text{high}})$
+
+$\operatorname{clip}(r_{t}, 1-\varepsilon_{\text{low}}, 1+\varepsilon_{\text{high}})$
+
 
 ---
 
