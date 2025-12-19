@@ -288,11 +288,6 @@ Verl 的拆分方式：
 - WorkerGroup 内部仍是「多进程 SPMD + NCCL 集合通信」
 - WorkerGroup 之间的数据交换走 Ray 的 object store / RPC
 
-> 这样，算法同学魔改「RL 算法逻辑」时只需要碰 Ray driver 这一层；
-> 
-> 
-> 想优化分布式效率，就只动 Worker 的 SPMD 部分，两边解耦。
-> 
 
 ---
 
