@@ -13,3 +13,4 @@ DAPO（字节）：提高clip上界、动态采样、token级梯度聚合、引�
 
 GSPO（qwen）：序列级重要性采样对齐序列级reward，解决token级噪声和MoE的routing replay问题
 
+$max_{\theta} \ \mathbb{E}\Big[ \frac{\pi_\theta(a|s)}{\pi_{\text{old}}(a|s)} A(s,a) \Big]$
